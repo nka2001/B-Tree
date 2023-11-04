@@ -1,6 +1,12 @@
 package btree.algconceptsteamproject;
 
+import java.io.BufferedReader;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
+import java.io.IOException;
 import java.util.Scanner;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 public class UI {
 
@@ -99,6 +105,26 @@ public class UI {
      *
      */
     private void loadFile() {
+        
+        String fileName = "partFile.txt";
+        
+        try{
+            
+            FileReader fr = new FileReader(fileName);
+            BufferedReader br = new BufferedReader(fr);
+            
+            String line;
+            
+            while((line = br.readLine()) != null){
+                System.out.println(line);
+            }
+            
+            br.close();
+            
+            
+        } catch (IOException ex) {
+            Logger.getLogger(UI.class.getName()).log(Level.SEVERE, null, ex);
+        }
 
     }
 
