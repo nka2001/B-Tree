@@ -1,6 +1,10 @@
 package btree.algconceptsteamproject;
 
+import java.util.Scanner;
+
 public class UI {
+
+    private Scanner scan = new Scanner(System.in);
 
     public UI() {
         this.loadFile();
@@ -15,21 +19,70 @@ public class UI {
      * (call .upper() or whatever the string method to turn a letter to its
      * uppercase version)
      *
-     * Q - Query a Part Number 
-     * D - display the next 10 items (I assume this is
-     * based on like, enter a part num, then show the next 10?) 
-     * M - modify the
-     * description of a part number 
-     * A - Add a new part 
-     * R - Remove a part 
-     * E - Exit the program (call saveFile when "S" is typed)
+     * Q - Query a Part Number D - display the next 10 items (I assume this is
+     * based on like, enter a part num, then show the next 10?) M - modify the
+     * description of a part number A - Add a new part R - Remove a part E -
+     * Exit the program (call saveFile when "S" is typed)
      *
      * .
      */
     private void begin() {
 
+        String choice = "";
+
         //this is where user input is gathered, keep it all inside the loop
         while (true) {
+
+            System.out.println("""
+                               ######################################################
+                               #                                                    #
+                               #                                                    #
+                               #                     Welcome!                       #
+                               #              Please Select an Option               #
+                               #                                                    #
+                               #               Q: Query a part number               #
+                               #               A: Add a new part                    #
+                               #               R: Remove a part                     #
+                               #               D: Display the next ten parts        #
+                               #               M: Modify a parts description        #
+                               #               E: Exit the program                  #
+                               #                                                    #
+                               #                                                    #
+                               #                                                    #
+                               ######################################################
+                               """);
+
+            System.out.println("\n");
+
+            System.out.print("Please enter your choice:  ");
+
+            choice = scan.next();
+            choice = choice.toUpperCase();
+
+            if (choice.compareTo("E") == 0) {
+                System.out.println("exiting, and saving program... goodbye");
+                //call write to file and wrtie the contents of the b+ tree to the file
+                System.exit(0);
+            } else if (choice.compareTo("Q") == 0) {
+                System.out.println("Query a part");
+
+            } else if (choice.compareTo("D") == 0) {
+                System.out.println("Display the next 10");
+
+            } else if (choice.compareTo("A") == 0) {
+                System.out.println("Add a new part");
+
+            } else if (choice.compareTo("M") == 0) {
+                System.out.println("Modify a part number");
+
+            } else if (choice.compareTo("R") == 0) {
+                System.out.println("Remove a part number");
+
+            } else {
+
+                System.out.println("please try again, not a valid option");
+
+            }
 
         }
 
@@ -39,22 +92,22 @@ public class UI {
      * loadFile will load the contents of the flat file into the B+ tree this
      * method is called before "begin", once complete the user can do whatever
      * they need to do.
-     * 
-     * note that this is not where the B+ tree DS is stored, this method will 
-     * simply use a private instance of a B+ tree to do the inserts until the file is parsed
+     *
+     * note that this is not where the B+ tree DS is stored, this method will
+     * simply use a private instance of a B+ tree to do the inserts until the
+     * file is parsed
      *
      */
     private void loadFile() {
 
     }
 
-    
     /**
-     * 
-     * when "E" is pressed, this method is called, it will write the contents of the B+ tree
-     * back into the flat file. 
-     * 
-     * 
+     *
+     * when "E" is pressed, this method is called, it will write the contents of
+     * the B+ tree back into the flat file.
+     *
+     *
      */
     private void saveFile() {
 
