@@ -1,19 +1,29 @@
 package btree.algconceptsteamproject;
 
 import java.util.Iterator;
+import java.util.LinkedList;
 
 public class BTreeDS<T extends Comparable<T>> implements Iterable {
 
-    private class Node<T> {
-
-        T[] data;
-        Node[] children;
-        int keyCount;
+    private class Node<K extends Comparable<K>, V> {
+        
+        LinkedList<K> keys;
+        LinkedList<V> values;
+        Node<K,V> parent;
+        LinkedList<Node<K,V>> children;
         boolean isLeaf;
+       
 
-        public Node() {
-
+        public Node(boolean isLeaf) {
+            this.isLeaf = isLeaf;
+            keys = new LinkedList<>();
+            values = new LinkedList<>();
+            children = new LinkedList<>();
             //do some init here
+        }
+        
+        public boolean isLeaf(){
+            return isLeaf;
         }
 
     }
@@ -27,7 +37,17 @@ public class BTreeDS<T extends Comparable<T>> implements Iterable {
      * @return
      */
     public boolean insert(T addMe) {
-
+        
+        if(root == null){
+            
+            root = new Node(true);
+            root.keys.add(addMe);
+            root.values.add(addMe);
+            
+            
+        }
+        
+        
         return false;
     }
 
@@ -69,6 +89,16 @@ public class BTreeDS<T extends Comparable<T>> implements Iterable {
     @Override
     public Iterator iterator() {
         throw new UnsupportedOperationException("Not supported yet."); // Generated from nbfs://nbhost/SystemFileSystem/Templates/Classes/Code/GeneratedMethodBody
+    }
+    
+    private String splitInput(T splitMe){
+        
+        String partSide = "";
+        String descriptionSide = "";
+        
+        
+        return "";
+        
     }
 
 }
