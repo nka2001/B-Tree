@@ -65,7 +65,6 @@ public class BTreeDS<T extends Comparable<T>> implements Iterable {
                 additionalRoot.children.add(this);
                 additionalRoot.children.add(newChildren);
 
-                // COPIED FROM GPT
                 additionalRoot.splitChild(0);
 
                 // parent call updated for current node and new child
