@@ -92,6 +92,9 @@ public class UI {
 
             } else if (choice.compareTo("R") == 0) {
                 System.out.println("Remove a part number");
+                String key = scan.next();
+                BPlusTree.remove(key);
+                
 
             } else {
 

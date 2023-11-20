@@ -108,12 +108,6 @@ public class BTreeDS<K extends Comparable<K>, V> implements Iterable {
 
     }
 
-    /**
-     * remove a node from the B+ tree
-     *
-     * @param removeMe
-     * @return
-     */
     private void split(Node<K, V> n) {
 
         int mid = n.keys.size() / 2;
@@ -151,10 +145,6 @@ public class BTreeDS<K extends Comparable<K>, V> implements Iterable {
             }
 
         }
-
-    }
-
-    private void merge() {
 
     }
 
@@ -229,6 +219,213 @@ public class BTreeDS<K extends Comparable<K>, V> implements Iterable {
 
         }
 
+    }
+
+    public void remove(K removeMe) {
+        remove(root, removeMe);
+    }
+
+    private boolean remove(Node<K, V> n, K removeMe) {
+
+        if (n == null) {
+            return false;
+        }
+
+        if (n.isLeaf()) {
+            int index = findKeyIndex(n, removeMe);
+
+            if (index < n.keys.size() && removeMe.compareTo(n.keys.get(index)) == 0) {
+                n.keys.remove(index);
+                n.values.remove(index);
+                handleLeafUnderflow(n);
+
+            }
+        } else {
+            int index = findChildIndex(n, removeMe);
+            remove(n.children.get(index), removeMe);
+        }
+
+        return true;
+
+    }
+
+    private void handleLeafUnderflow(Node<K, V> n) {
+
+        if (n.keys.size() < (MAXperNODE + 1) / 2) {
+
+            Node<K, V> left = getleftSide(n);
+
+            if (left != null && left.keys.size() > (MAXperNODE + 1) / 2) {
+                borrowfromLeft(n, left);
+            } else {
+
+                Node<K, V> right = getRightSide(n);
+                if (right != null && right.keys.size() > (MAXperNODE + 1) / 2) {
+                    borrowfromRight(n, right);
+                } else {
+                    mergeNodes(n);
+                }
+
+            }
+
+        }
+
+    }
+
+    private Node<K, V> getleftSide(Node<K, V> n) {
+
+        if (n.parent != null) {
+            int index = n.parent.children.indexOf(n);
+            if (index > 0) {
+                return n.parent.children.get(index - 1);
+            }
+
+        }
+        return null;
+
+    }
+
+    private Node<K, V> getRightSide(Node<K, V> n) {
+
+        if (n.parent != null) {
+
+            int index = n.parent.children.indexOf(n);
+            if (index < n.parent.children.size() - 1) {
+                return n.parent.children.get(index - 1);
+            }
+
+        }
+
+        return null;
+
+    }
+
+    private void borrowfromRight(Node<K, V> n, Node<K, V> right) {
+
+        K Kborrowed = right.keys.remove(0);
+        V Vborrowed = right.values.remove(0);
+
+        n.keys.add(Kborrowed);
+        n.values.add(Vborrowed);
+
+        updateParentKey(right, right.keys.get(0));
+
+    }
+
+    private void borrowfromLeft(Node<K, V> n, Node<K, V> left) {
+
+        int lastIndex = left.keys.size() - 1;
+        K Kborrowed = left.keys.remove(lastIndex);
+        V Vborrowed = left.values.remove(lastIndex);
+
+        n.keys.add(0, Kborrowed);
+        n.values.add(0, Vborrowed);
+
+        updateParentKey(n, Kborrowed);
+
+    }
+
+    private void mergeNodes(Node<K, V> n) {
+
+        Node<K, V> right = getRightSide(n);
+
+        if (right != null) {
+            n.keys.addAll(right.keys);
+            n.values.addAll(right.values);
+
+            updateParentKey(n, right.keys.get(0));
+
+            n.parent.children.remove(right);
+        }
+
+    }
+
+    private void updateParentKey(Node<K, V> n, K newKey) {
+
+        Node<K, V> parent = n.parent;
+        int index = parent.children.indexOf(n);
+        parent.keys.set(index, newKey);
+
+        handleInternalUnderflow(n);
+
+    }
+
+    private void handleInternalUnderflow(Node<K, V> n) {
+
+        if (n.keys.size() < (MAXperNODE + 1) / 2) {
+
+            Node<K, V> left = getleftSide(n);
+
+            if (left != null && left.keys.size() > (MAXperNODE + 1) / 2) {
+                borrowInternalFromLeft(n, left);
+            } else {
+                Node<K, V> right = getRightSide(n);
+                if (right != null && right.keys.size() > (MAXperNODE + 1) / 2) {
+                    borrowInternalFromRight(n, right);
+                } else {
+                    mergeInternalNodes(n);
+                }
+            }
+
+        }
+
+    }
+    
+    private void borrowInternalFromLeft(Node<K,V> n, Node<K,V> left){
+        
+        int lastIndex = left.keys.size() - 1;
+        K borrowedK = left.keys.remove(lastIndex);
+        Node<K,V> borrowedC = left.children.remove(lastIndex + 1);
+        
+        n.keys.add(0, borrowedK);
+        n.children.add(0, borrowedC);
+        
+        updateParentKey(n, borrowedK);
+        
+    }
+    
+    private void borrowInternalFromRight(Node<K,V> n, Node<K,V> right){
+        
+        K borrowedK = right.keys.remove(0);
+        Node<K,V> borrowedC = right.children.remove(0);
+        
+        n.keys.add(borrowedK);
+        n.children.add(borrowedC);
+        
+        updateParentKey(n, borrowedK);
+        
+        
+    }
+    
+    private void mergewithRightSibling(Node<K,V> n, Node<K,V> r){
+        
+        Node<K,V> right = getRightSide(n);
+        
+        if(right != null){
+            K parent = n.parent.keys.remove(n.parent.children.indexOf(n));
+            right.keys.add(0, parent);
+            right.keys.addAll(0, n.keys);
+            right.children.addAll(0, n.children);
+            
+            updateParentKey(right, right.keys.get(0));
+            
+            n.parent.children.remove(n);
+        }
+        
+        
+    }
+    
+    private void mergeInternalNodes(Node<K,V> n){
+        
+        Node<K,V> left = getleftSide(n);
+        Node<K,V> right = getRightSide(n);
+        
+        if(left != null && left.keys.size() > (MAXperNODE + 1) / 2){
+            borrowInternalFromLeft(n, left);
+        } else if(right != null){
+            mergewithRightSibling(n, right);
+        }
+        
     }
 
 }
