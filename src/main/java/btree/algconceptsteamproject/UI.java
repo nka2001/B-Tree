@@ -9,8 +9,10 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 public class UI {
-
+    String key = "";
+    String value = "";
     private Scanner scan = new Scanner(System.in);
+    private BTreeDS BPlusTree = new BTreeDS();
 
     public UI() {
         this.loadFile();
@@ -71,11 +73,19 @@ public class UI {
                 System.exit(0);
             } else if (choice.compareTo("Q") == 0) {
                 System.out.println("Query a part");
+                System.out.println(BPlusTree.searchTree("Hello"));
 
             } else if (choice.compareTo("D") == 0) {
-                System.out.println("Display the next 10");
+                BPlusTree.printTree();
 
             } else if (choice.compareTo("A") == 0) {
+
+                String key = scan.next();
+                String value = scan.next();
+
+                BPlusTree.insert(key, value);
+
+
                 System.out.println("Add a new part");
 
             } else if (choice.compareTo("M") == 0) {
@@ -83,6 +93,9 @@ public class UI {
 
             } else if (choice.compareTo("R") == 0) {
                 System.out.println("Remove a part number");
+                String key = scan.next();
+                BPlusTree.remove(key);
+
 
             } else {
 
@@ -105,27 +118,36 @@ public class UI {
      *
      */
     private void loadFile() {
-        
+
         String fileName = "partFile.txt";
-        
+
         try{
-            
+
             FileReader fr = new FileReader(fileName);
             BufferedReader br = new BufferedReader(fr);
-            
+
             String line;
-            
+
             while((line = br.readLine()) != null){
-                System.out.println(line);
+                String[] parts = line.split(","); // Adjust the delimiter based on your file format
+
+                if (parts.length >= 2) {
+                    String key = parts[0].trim();
+                    String value = parts[1].trim();
+
+                    // Insert the key-value pair into the B+ tree
+                    BPlusTree.insert(key, value);
+                    BPlusTree.printTree();
+
+                }
             }
-            
+
             br.close();
-            
-            
+
+
         } catch (IOException ex) {
             Logger.getLogger(UI.class.getName()).log(Level.SEVERE, null, ex);
         }
-
     }
 
     /**
