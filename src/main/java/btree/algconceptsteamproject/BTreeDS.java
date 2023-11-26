@@ -34,6 +34,8 @@ public class BTreeDS<K extends Comparable<K>, V> implements Iterable {
         this.root = new Node<>(true);
     }
 
+    // Anila and Nick worked together on the insert method below
+
     /**
      * insert a new node into the B+tree
      *
@@ -108,6 +110,7 @@ public class BTreeDS<K extends Comparable<K>, V> implements Iterable {
 
     }
 
+    // Anila and Nick worked on the Split method together 
     private void split(Node<K, V> n) {
 
         int mid = n.keys.size() / 2;
