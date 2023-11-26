@@ -9,6 +9,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 public class UI {
+    // Anila added the following initalizations the String variables, the Scanner, and Class Objecr
     String key = "";
     String value = "";
     private Scanner scan = new Scanner(System.in);
@@ -118,6 +119,7 @@ public class UI {
      *
      */
     private void loadFile() {
+        // Anila and Nick worked on the code below together
 
         String fileName = "partFile.txt";
 
