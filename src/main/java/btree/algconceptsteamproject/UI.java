@@ -65,6 +65,8 @@ public class UI {
 
             choice = scan.next();
             choice = choice.toUpperCase();
+            
+            String qP = "";
 
             if (choice.compareTo("E") == 0) {
                 System.out.println("exiting, and saving program... goodbye");
@@ -72,7 +74,11 @@ public class UI {
                 System.exit(0);
             } else if (choice.compareTo("Q") == 0) {
                 System.out.println("Query a part");
-                System.out.println(BPlusTree.searchTree("Hello"));
+                
+                qP = scan.next();
+                
+                System.out.println(BPlusTree.searchTree(qP));
+                
 
             } else if (choice.compareTo("D") == 0) {
                 BPlusTree.printTree();
@@ -118,7 +124,7 @@ public class UI {
      */
     private void loadFile() {
         
-        String fileName = "partFile.txt";
+        String fileName = "partfile.txt";
         
         try{
             
@@ -127,8 +133,15 @@ public class UI {
             
             String line;
             
+            String key = "";
+            String val = "";
+            
             while((line = br.readLine()) != null){
-                System.out.println(line);
+                key = line.substring(0, 7);
+                val = line.substring(7,line.length());
+                
+                BPlusTree.insert(key.trim(), val.trim());
+                
             }
             
             br.close();
