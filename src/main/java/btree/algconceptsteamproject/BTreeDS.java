@@ -1,194 +1,312 @@
 package btree.algconceptsteamproject;
 
+import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.LinkedList;
+import java.util.List;
+import java.util.Queue;
 
-public class BTreeDS<K extends Comparable<K>, V> implements Iterable {
+public class BTreeDS<K extends Comparable<K>, V> implements Iterable<K> {
 
-    private class Node<K extends Comparable<K>, V> {
+    private class Node {
 
         LinkedList<K> keys;
         LinkedList<V> values;
-        Node<K, V> parent;
-        LinkedList<Node<K, V>> children;
+        Node parent;
+        LinkedList<Node> children;
         boolean isLeaf;
+        Node next;
 
         public Node(boolean isLeaf) {
             this.isLeaf = isLeaf;
             keys = new LinkedList<>();
             values = new LinkedList<>();
             children = new LinkedList<>();
-            //do some init here
+            next = null;
         }
 
         public boolean isLeaf() {
             return isLeaf;
         }
-
     }
 
-    private static int MAXperNODE = 3;
-    private Node<K, V> root;
+    private static final int MAX_PER_NODE = 3;
+    private static final int MAX_PER_LEAF = 15;
+
+    private Node root;
 
     public BTreeDS() {
-        this.root = new Node<>(true);
+        root = new Node(true);
     }
 
-    /**
-     * insert a new node into the B+tree
-     *
-     * @param addMe
-     * @return
-     */
-    public boolean insert(K key, V value) {
-
-        Node<K, V> current = root;
-
-        while (!current.isLeaf()) {
-            int index = findChildIndex(current, key);
-            current = current.children.get(index);
-        }
-
-        int index = findKeyIndex(current, key);
-        current.keys.add(index, key);
-        current.values.add(index, value);
-
-        if (current.keys.size() > MAXperNODE) {
-            split(current);
-        }
-
-        updateParentNode(current, key);
-
-        System.out.println(current.keys.toString());
-        return true;
-
+    public void insert(K key, V value) {
+        insert(root, key, value);
     }
 
-    private void updateParentNode(Node<K, V> n, K key) {
+    private void insert(Node node, K key, V value) {
+        if (node.isLeaf()) {
+            insertIntoLeaf(node, key, value);
 
-        Node<K, V> parent = n.parent;
-
-        if (parent != null) {
-            int index = findKeyIndex(parent, key);
-
-            if (index == 0) {
-                parent.keys.set(index, key);
-            } else {
-                parent.keys.set(index - 1, key);
+            if (node.keys.size() > MAX_PER_LEAF) {
+                splitNode(node);
             }
+        } else {
+            int index = findChildIndex(node, key);
+            insert(node.children.get(index), key, value);
 
-            if (parent.keys.size() > MAXperNODE) {
-                //split an internal node here
+            if (node.children.size() > MAX_PER_NODE) {
+
+                splitNode(node.children.get(index));
             }
+        }
 
-            updateParentNode(parent, key);
+        if (!node.isLeaf() && node.keys.size() >= MAX_PER_NODE) {
+            splitNode(node);
         }
 
     }
 
-    private int findKeyIndex(Node<K, V> n, K key) {
+    private void splitNode(Node node) {
+        if (node.isLeaf() && node.keys.size() > MAX_PER_LEAF) {
+            System.out.println(node.keys.size());
+            System.out.println("splitleaf");
+            splitLeaf(node);
 
-        int index = 0;
-        while (index < n.keys.size() && key.compareTo(n.keys.get(index)) > 0) {
-            index++;
         }
+        if (!node.isLeaf() && node.keys.size() >= MAX_PER_NODE) {
 
-        return index;
+            System.out.println(node.keys.toString());
+            System.out.println("split internal");
 
+            splitInternal(node);
+        }
     }
 
-    private int findChildIndex(Node<K, V> n, K key) {
+    private void splitLeaf(Node leafNode) {
+        Node newLeaf = new Node(true);
 
-        int index = 0;
-        while (index < n.keys.size() && key.compareTo(n.keys.get(index)) > 0) {
-            index++;
-        }
+        int mid = leafNode.keys.size() / 2;
+        newLeaf.keys.addAll(leafNode.keys.subList(mid, leafNode.keys.size()));
+        newLeaf.values.addAll(leafNode.values.subList(mid, leafNode.values.size()));
 
-        return index;
+        leafNode.keys.subList(mid, leafNode.keys.size()).clear();
+        leafNode.values.subList(mid, leafNode.values.size()).clear();
 
-    }
-
-    private void split(Node<K, V> n) {
-
-        int mid = n.keys.size() / 2;
-
-        Node<K, V> newNode = new Node<>(true);
-
-        //moves the upper half keys into the new node 
-        newNode.keys.addAll(n.keys.subList(mid, n.keys.size()));
-        newNode.values.addAll(n.values.subList(mid, n.values.size()));
-
-        //remove the old keys from the old node
-        n.keys.subList(mid, n.keys.size()).clear();
-        n.values.subList(mid, n.values.size()).clear();
-
-        K newKey = newNode.keys.get(0);
-        Node<K, V> parent = n.parent;
+        // Adjust pointers in the linked list of leaf nodes
+        
+        newLeaf.next = leafNode.next;
+        leafNode.next = newLeaf;
+        
+        
+        // Adjust pointers in the parent node
+        Node parent = leafNode.parent;
 
         if (parent == null) {
-
-            root = new Node<>(false);
-            root.children.add(n);
-            root.children.add(newNode);
-            root.keys.add(newKey);
-            n.parent = root;
-            newNode.parent = root;
-
-        } else {
-
-            int index = findKeyIndex(parent, newKey);
-            parent.keys.add(index, newKey);
-            parent.children.add(index + 1, newNode);
-
-            if (parent.keys.size() > MAXperNODE) {
-                System.out.println("split an internal node");
-            }
+            // Create a new parent if splitting the root
+            parent = new Node(false);
+            parent.children.add(leafNode);
+            parent.children.add(newLeaf);
+            root = parent;
 
         }
 
+        // Find the index to insert the middle key into the parent node
+        int index = findChildIndex(parent, newLeaf.keys.get(0));
+        parent.keys.add(index, newLeaf.keys.get(0));
+        parent.children.add(newLeaf);
+        newLeaf.parent = parent;
+
+        if (newLeaf.parent.keys.size() > 3) {
+            splitInternal(newLeaf.parent);
+        }
+
+    }
+
+    private void splitInternal(Node node) {
+        int mid = (node.keys.size() / 2);
+
+        Node newInternal = new Node(false);
+
+        newInternal.keys.addAll(node.keys.subList(mid, node.keys.size()));
+        newInternal.children.addAll(node.children.subList(mid, node.children.size()));
+
+        System.out.println("NI" + newInternal.keys.toString());
+
+        if (node.parent == null) {
+            // Create a new root
+            Node newRoot = new Node(false);
+
+            newRoot.keys.add(node.keys.get(mid));
+            newRoot.children.add(node);
+            newRoot.children.add(newInternal);
+            node.parent = newRoot;
+            newInternal.parent = newRoot;
+            root = newRoot;
+            node.keys.subList(mid, node.keys.size()).clear();
+            node.children.subList(mid + 1, node.children.size()).clear();
+
+        } else {
+            // Insert the new key into the parent node
+            node.keys.subList(mid, node.keys.size()).clear();
+            node.children.subList(mid + 1, node.children.size()).clear();
+
+            int index = findChildIndex(node.parent, newInternal.keys.getFirst());
+            node.parent.keys.add(index, newInternal.keys.getFirst());
+            node.parent.children.add(index + 1, newInternal);
+            newInternal.parent = node.parent;
+
+            splitNode(node.parent);  // Recursive call for potential further splitting
+        }
+
+    }
+
+    private void insertIntoLeaf(Node node, K key, V value) {
+        int index = findKeyIndex(node, key);
+        node.keys.add(index, key);
+        node.values.add(index, value);
+    }
+
+    private int findKeyIndex(Node node, K key) {
+        int index = 0;
+        while (index < node.keys.size() && key.compareTo(node.keys.get(index)) > 0) {
+            index++;
+        }
+        return index;
+    }
+
+    private int findChildIndex(Node node, K key) {
+        int index = 0;
+        while (index < node.keys.size() && key.compareTo(node.keys.get(index)) >= 0) {
+            index++;
+        }
+        return index;
     }
 
     public void printTree() {
         print(root, 0);
     }
 
-    private void print(Node<K, V> n, int level) {
+    private void print(Node n, int level) {
 
-        if (n != null) {
+        if (n == null) {//base case here is if the node provided isn't null, then do the printing
 
-            for (int i = 0; i < n.keys.size(); i++) {
-                if (!n.isLeaf()) {
-                    print(n.children.get(i), level + 1);
+            System.out.println("empoty");
+
+        }
+
+        System.out.println("Level " + level + ": " + n.isLeaf() + ", " + n.keys.size());
+        for (int i = 0; i < n.keys.size(); i++) {
+            System.out.println(n.keys.get(i) + " ");
+        }
+        System.out.println();
+
+        if (!n.isLeaf()) {
+            for (Node c : n.children) {
+                print(c, level + 1);
+            }
+        }
+
+    }
+
+    public void displayNext10(K key) {
+
+      Node currentLeaf = findLeafNode(key);
+    
+    if (currentLeaf == null) {
+        System.out.println("Key not found.");
+        return;
+    }
+
+    int count = 0;
+
+    while (currentLeaf != null && count < 10) {
+        for (int i = 0; i < currentLeaf.keys.size(); i++) {
+            // Skip keys that are less than or equal to the provided key
+            if (currentLeaf.keys.get(i).compareTo(key) > 0) {
+                System.out.println("Key: " + currentLeaf.keys.get(i) + ", Value: " + currentLeaf.values.get(i));
+                count++;
+
+                if (count >= 10) {
+                    break;
                 }
+            }
+        }
 
-                for (int j = 0; j < level; j++) {
-                    System.out.println("         ");
-                }
-                System.out.println(n.keys.get(i));
+        currentLeaf = currentLeaf.next;
+    }
+        
+        
+    }
 
-                if (n.isLeaf()) {
+    private Node findLeafNode(K key) {
+        Node current = root;
 
-                    for (int j = 0; j < level; j++) {
-                        System.out.println("         ");
-                    }
+    while (!current.isLeaf()) {
+        Node internalNode = (Node) current;
+        int childIndex = findChildIndex(internalNode, key);
+        current = internalNode.children.get(childIndex);
+    }
 
-                    System.out.println("=>" + n.values.get(i));
+    return (Node) current;
+        
+    }
 
-                }
+    @Override
+    public Iterator<K> iterator() {
+        return new BPlusTreeIterator(root);
+    }
 
-                if (i == n.keys.size() - 1 && !n.isLeaf()) {
-                    print(n.children.get(i + 1), level + 1);
+    private class BPlusTreeIterator implements Iterator<K> {
+
+        private Node next;
+        private Queue<Node> q = new LinkedList<>();
+
+        public BPlusTreeIterator(Node n) {
+
+            makeQueue(n);
+
+        }
+
+        private void makeQueue(Node n) {
+            if (n != null) {
+                q.add(n);
+
+                while (!q.isEmpty() && !q.peek().isLeaf()) {
+
+                    Node current = q.poll();
+                    q.addAll(current.children);
+
                 }
 
             }
 
         }
 
-    }
+        public void setStartKey(K startHere) {
+            q.clear();
+            makeQueue(findLeafNode(startHere));
+        }
 
-    @Override
-    public Iterator iterator() {
-        throw new UnsupportedOperationException("Not supported yet."); // Generated from nbfs://nbhost/SystemFileSystem/Templates/Classes/Code/GeneratedMethodBody
+        @Override
+        public boolean hasNext() {
+            return q.isEmpty();
+        }
+
+        @Override
+        public K next() {
+            if (!hasNext()) {
+                return null;
+            }
+
+            next = q.poll();
+            K nextKey = next.keys.getFirst();
+
+            q.addAll(next.children);
+
+            return nextKey;
+
+        }
+
     }
 
     public V searchTree(K key) {
@@ -197,7 +315,7 @@ public class BTreeDS<K extends Comparable<K>, V> implements Iterable {
 
     }
 
-    private V searchTree(Node<K, V> n, K key) {
+    private V searchTree(Node n, K key) {
 
         if (n == null) {
             return null;
@@ -225,7 +343,7 @@ public class BTreeDS<K extends Comparable<K>, V> implements Iterable {
         remove(root, removeMe);
     }
 
-    private boolean remove(Node<K, V> n, K removeMe) {
+    private boolean remove(Node n, K removeMe) {
 
         if (n == null) {
             return false;
@@ -249,18 +367,18 @@ public class BTreeDS<K extends Comparable<K>, V> implements Iterable {
 
     }
 
-    private void handleLeafUnderflow(Node<K, V> n) {
+    private void handleLeafUnderflow(Node n) {
 
-        if (n.keys.size() < (MAXperNODE + 1) / 2) {
+        if (n.keys.size() < (MAX_PER_NODE + 1) / 2) {
 
-            Node<K, V> left = getleftSide(n);
+            Node left = getleftSide(n);
 
-            if (left != null && left.keys.size() > (MAXperNODE + 1) / 2) {
+            if (left != null && left.keys.size() > (MAX_PER_NODE + 1) / 2) {
                 borrowfromLeft(n, left);
             } else {
 
-                Node<K, V> right = getRightSide(n);
-                if (right != null && right.keys.size() > (MAXperNODE + 1) / 2) {
+                Node right = getRightSide(n);
+                if (right != null && right.keys.size() > (MAX_PER_NODE + 1) / 2) {
                     borrowfromRight(n, right);
                 } else {
                     mergeNodes(n);
@@ -272,7 +390,7 @@ public class BTreeDS<K extends Comparable<K>, V> implements Iterable {
 
     }
 
-    private Node<K, V> getleftSide(Node<K, V> n) {
+    private Node getleftSide(Node n) {
 
         if (n.parent != null) {
             int index = n.parent.children.indexOf(n);
@@ -285,7 +403,7 @@ public class BTreeDS<K extends Comparable<K>, V> implements Iterable {
 
     }
 
-    private Node<K, V> getRightSide(Node<K, V> n) {
+    private Node getRightSide(Node n) {
 
         if (n.parent != null) {
 
@@ -300,7 +418,7 @@ public class BTreeDS<K extends Comparable<K>, V> implements Iterable {
 
     }
 
-    private void borrowfromRight(Node<K, V> n, Node<K, V> right) {
+    private void borrowfromRight(Node n, Node right) {
 
         K Kborrowed = right.keys.remove(0);
         V Vborrowed = right.values.remove(0);
@@ -312,7 +430,7 @@ public class BTreeDS<K extends Comparable<K>, V> implements Iterable {
 
     }
 
-    private void borrowfromLeft(Node<K, V> n, Node<K, V> left) {
+    private void borrowfromLeft(Node n, Node left) {
 
         int lastIndex = left.keys.size() - 1;
         K Kborrowed = left.keys.remove(lastIndex);
@@ -325,9 +443,9 @@ public class BTreeDS<K extends Comparable<K>, V> implements Iterable {
 
     }
 
-    private void mergeNodes(Node<K, V> n) {
+    private void mergeNodes(Node n) {
 
-        Node<K, V> right = getRightSide(n);
+        Node right = getRightSide(n);
 
         if (right != null) {
             n.keys.addAll(right.keys);
@@ -340,9 +458,9 @@ public class BTreeDS<K extends Comparable<K>, V> implements Iterable {
 
     }
 
-    private void updateParentKey(Node<K, V> n, K newKey) {
+    private void updateParentKey(Node n, K newKey) {
 
-        Node<K, V> parent = n.parent;
+        Node parent = n.parent;
         int index = parent.children.indexOf(n);
         parent.keys.set(index, newKey);
 
@@ -350,17 +468,17 @@ public class BTreeDS<K extends Comparable<K>, V> implements Iterable {
 
     }
 
-    private void handleInternalUnderflow(Node<K, V> n) {
+    private void handleInternalUnderflow(Node n) {
 
-        if (n.keys.size() < (MAXperNODE + 1) / 2) {
+        if (n.keys.size() < (MAX_PER_NODE + 1) / 2) {
 
-            Node<K, V> left = getleftSide(n);
+            Node left = getleftSide(n);
 
-            if (left != null && left.keys.size() > (MAXperNODE + 1) / 2) {
+            if (left != null && left.keys.size() > (MAX_PER_NODE + 1) / 2) {
                 borrowInternalFromLeft(n, left);
             } else {
-                Node<K, V> right = getRightSide(n);
-                if (right != null && right.keys.size() > (MAXperNODE + 1) / 2) {
+                Node right = getRightSide(n);
+                if (right != null && right.keys.size() > (MAX_PER_NODE + 1) / 2) {
                     borrowInternalFromRight(n, right);
                 } else {
                     mergeInternalNodes(n);
@@ -370,62 +488,105 @@ public class BTreeDS<K extends Comparable<K>, V> implements Iterable {
         }
 
     }
-    
-    private void borrowInternalFromLeft(Node<K,V> n, Node<K,V> left){
-        
+
+    private void borrowInternalFromLeft(Node n, Node left) {
+
         int lastIndex = left.keys.size() - 1;
         K borrowedK = left.keys.remove(lastIndex);
-        Node<K,V> borrowedC = left.children.remove(lastIndex + 1);
-        
+        Node borrowedC = left.children.remove(lastIndex + 1);
+
         n.keys.add(0, borrowedK);
         n.children.add(0, borrowedC);
-        
+
         updateParentKey(n, borrowedK);
-        
+
     }
-    
-    private void borrowInternalFromRight(Node<K,V> n, Node<K,V> right){
-        
+
+    private void borrowInternalFromRight(Node n, Node right) {
+
         K borrowedK = right.keys.remove(0);
-        Node<K,V> borrowedC = right.children.remove(0);
-        
+        Node borrowedC = right.children.remove(0);
+
         n.keys.add(borrowedK);
         n.children.add(borrowedC);
-        
+
         updateParentKey(n, borrowedK);
-        
-        
+
     }
-    
-    private void mergewithRightSibling(Node<K,V> n, Node<K,V> r){
-        
-        Node<K,V> right = getRightSide(n);
-        
-        if(right != null){
+
+    private void mergewithRightSibling(Node n, Node r) {
+
+        Node right = getRightSide(n);
+
+        if (right != null) {
             K parent = n.parent.keys.remove(n.parent.children.indexOf(n));
             right.keys.add(0, parent);
             right.keys.addAll(0, n.keys);
             right.children.addAll(0, n.children);
-            
+
             updateParentKey(right, right.keys.get(0));
-            
+
             n.parent.children.remove(n);
         }
-        
-        
+
     }
-    
-    private void mergeInternalNodes(Node<K,V> n){
-        
-        Node<K,V> left = getleftSide(n);
-        Node<K,V> right = getRightSide(n);
-        
-        if(left != null && left.keys.size() > (MAXperNODE + 1) / 2){
+
+    private void mergeInternalNodes(Node n) {
+
+        Node left = getleftSide(n);
+        Node right = getRightSide(n);
+
+        if (left != null && left.keys.size() > (MAX_PER_NODE + 1) / 2) {
             borrowInternalFromLeft(n, left);
-        } else if(right != null){
+        } else if (right != null) {
             mergewithRightSibling(n, right);
         }
-        
+
+    }
+
+    /**
+     * public modify method, takes a user provided key and value, will call the
+     * private method to perform the actual modification
+     *
+     * @param key
+     * @param newValue
+     * @return
+     */
+    public void modify(K key, V newValue) {
+
+        modify(root, key, newValue);//please refer to the private method called modify 
+    }
+
+    /**
+     * modify method, will take a key and a value to be set, this method will
+     * traverse the tree and if the provided key is found, then its value is
+     * updated with the new provided value
+     *
+     * takes any node as a parameter, but will take root by default
+     *
+     * @param n
+     * @param key
+     * @param newValue
+     * @return
+     */
+    private void modify(Node n, K key, V newValue) {
+
+        //base case 1, tree is empty
+        if (n == null) {
+            return;
+        }
+        //base case 2 is combined with the actual search, so if the value is not found, then false is returned anyways
+        if (n.isLeaf()) {
+            int index = findKeyIndex(n, key);//find the index where the key is
+            if (index < n.keys.size() && key.compareTo(n.keys.get(index)) == 0) {//compare the key at that index to the key provided
+                n.values.set(index, newValue);//then set the new value 
+
+            }
+        } else {//otherwise get to a new node
+            int index = findChildIndex(n, key);//get the child index, and recursively traverse the tree
+            modify(n.children.get(index), key, newValue);//recursively traverse the tree until a leaf node is hit
+        }
+
     }
 
 }

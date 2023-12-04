@@ -11,4 +11,5 @@
         <maven.compiler.target>16</maven.compiler.target>
         <exec.mainClass>btree.algconceptsteamproject.AlgConceptsTeamProject</exec.mainClass>
     </properties>
+    <name>btree5</name>
 </project>
