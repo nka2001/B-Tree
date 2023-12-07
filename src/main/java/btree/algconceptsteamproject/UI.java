@@ -1,6 +1,7 @@
 package btree.algconceptsteamproject;
 
 import java.io.BufferedReader;
+import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.Scanner;
@@ -67,6 +68,7 @@ public class UI {
                                #               R: Remove a part                     #
                                #               D: Display the next ten parts        #
                                #               M: Modify a parts description        #
+                               #               P: Print the tree                    #
                                #               E: Exit the program                  #
                                #                                                    #
                                #                                                    #
@@ -81,18 +83,30 @@ public class UI {
             choice = scan.next();//get the user input for the choice
             choice = choice.toUpperCase();//convert to uppercase, used for checking against possible choices, also allows a user to put in lowercase numbers
 
+            choice = choice.substring(0, 1);//used for JAR file issues, does not affect running in IDEs
+
             if (choice.compareTo("E") == 0) {//exit option, will prompt the user if they want to save their changes before leaving
                 System.out.println("Would you like to save your changes (Y/N) ?");
 
                 String yn = scan.next();//this is for Yes/No choice
                 yn = yn.toUpperCase();//convert it to uppercase
-
-                if (yn.compareTo("Y") == 0) {//if the choice is y or Y, then...
-                    System.out.println("Saving Changes...");
-                    BPlusTree.writeToFile();//call the save method, this writes the leaf nodes back to the flat file
-                } else {
-                    System.out.println("not saving changes...");//otherwise, dont save the file and move on
+                yn = yn.trim();//used for JAR file issues, does not affect running in IDEs
+                
+                while (true) {
+                    if (yn.compareTo("Y") == 0) {//if the choice is y or Y, then...
+                        System.out.println("Saving Changes...");
+                        BPlusTree.writeToFile();//call the save method, this writes the leaf nodes back to the flat file
+                        
+                        break;
+                    } else if (yn.compareTo("N") == 0) {
+                        System.out.println("not saving changes...");//otherwise, dont save the file and move on
+                        break;
+                    } else {
+                        System.out.println("unknown option, please choose yes (y) or no (n)");
+                        
+                    }
                 }
+                
                 System.out.println("Before you go, check out some interesting statistics: ");
                 BPlusTree.showCalcs();//this will print some statistics about the B+ tree, such as B+ tree depth, number of splits / merges
 
@@ -105,10 +119,14 @@ public class UI {
                 System.out.println("Please Enter the 7 Digit Part Number to Query: ");
 
                 String key = scan.next();//get the key from the user
+                key = key.trim();//used for JAR file issues, does not affect running in IDEs
+
+                System.out.println(key.length());
 
                 while (key.length() > 7 || key.length() < 7) {//key needs to be exactly 7 digits, if not, user will be promted again until fixed
                     System.out.println("sorry, the key length needs to be 7 digits, please try again:");
                     key = scan.next();//get the updated part number and check if it satisfys the while loop
+                    key = key.trim();//used for JAR file issues, does not affect running in IDEs
                 }
 
                 if (BPlusTree.searchTree(key) == null) {//the search method will return null if nothing is found
@@ -123,10 +141,12 @@ public class UI {
                 System.out.println("Please enter a key: ");
 
                 String key = scan.next();//get the key from the user
+                key = key.trim();//used for JAR file issues, does not affect running in IDEs
 
                 while (key.length() > 7 || key.length() < 7) {//key needs to be exactly 7 digits, if not, user will be promted again until fixed
                     System.out.println("sorry, the key length needs to be 7 digits, please try again:");
                     key = scan.next();//get the updated part number and check if it satisfys the while loop
+                    key = key.trim();//used for JAR file issues, does not affect running in IDEs
                 }
 
                 BPlusTree.displayNext10(key);//then, pass the key in and print out the next 10 keys
@@ -137,10 +157,12 @@ public class UI {
                 System.out.println("Enter the 7 Digit Part Number: ");
 
                 String key = scan.next();//get the part number (key)
+                key = key.trim();//used for JAR file issues, does not affect running in IDEs
 
                 while (key.length() > 7 || key.length() < 7) {//key needs to be exactly 7 digits, if not, user will be promted again until fixed
                     System.out.println("sorry, the key length needs to be 7 digits, please try again:");
                     key = scan.next();//get the updated part number and check if it satisfys the while loop
+                    key = key.trim();//used for JAR file issues, does not affect running in IDEs
                 }
 
                 System.out.println("Enter the Part Description: ");
@@ -153,10 +175,12 @@ public class UI {
 
                 System.out.println("please enter the part number: ");
                 String key = scan.next();//get the part number from the user
+                key = key.trim();//used for JAR file issues, does not affect running in IDEs
 
                 while (key.length() > 7 || key.length() < 7) {//key needs to be exactly 7 digits, if not, user will be promted again until fixed
                     System.out.println("sorry, the key length needs to be 7 digits, please try again:");
                     key = scan.next();//get the updated part number and check if it satisfys the while loop
+                    key = key.trim();//used for JAR file issues, does not affect running in IDEs
                 }
 
                 System.out.println("Please enter the new description:");
@@ -169,10 +193,12 @@ public class UI {
             } else if (choice.compareTo("R") == 0) {//R will ask the user for a key, then if that key is in the tree, 
                 System.out.println("Remove a part number");
                 String key = scan.next();//get the key from the user
-
+                key = key.trim();//used for JAR file issues, does not affect running in IDEs
+                
                 while (key.length() > 7 || key.length() < 7) {//key needs to be exactly 7 digits, if not, user will be promted again until fixed
                     System.out.println("sorry, the key length needs to be 7 digits, please try again:");
                     key = scan.next();//get the updated part number and check if it satisfys the while loop
+                    key = key.trim();//used for JAR file issues, does not affect running in IDEs
                 }
 
                 if (BPlusTree.remove(key)) {//if the key is in the tree, and is successfully removed, then
@@ -212,7 +238,13 @@ public class UI {
 
         try {//try-catch is for file handling, looks for an IOException
 
-            FileReader fr = new FileReader(fileName);//create a fileReader 
+            File f = new File("partfile.txt");
+
+            String path = f.getAbsolutePath();
+
+            System.out.println(path);
+
+            FileReader fr = new FileReader(path);//create a fileReader 
             BufferedReader br = new BufferedReader(fr);//create a buffered reader to parse the file
 
             String line;//each line of the file 

@@ -635,7 +635,8 @@ public class BTreeDS<K extends Comparable<K>, V> implements Iterable<K> {
             if (index < n.keys.size() && removeMe.compareTo(n.keys.get(index)) == 0) {//if the index is valid, then
                 n.keys.remove(index);//remove the key
                 n.values.remove(index);//and remove the value
-
+                handleLeafUnderflow(n);
+                
             }
         } else {//otherwise, get to the child node that has the index
             int index = findChildIndex(n, removeMe);//traverse the tree until a child node is found
